@@ -12,8 +12,6 @@ spec:
         site: USA
         deployment: production                
     spec:
-      nodeSelector:
-        "aws": {{ .Values.aws | quote }}
       containers:
       - name: web-pod-1
         image: fashaikh7/three-tier-proxy:{{.Values.image}} 
@@ -39,8 +37,6 @@ spec:
         site: USA
         deployment: production
     spec:
-      nodeSelector:
-        "aws": {{ .Values.aws | quote }}
       containers:
       - name: app-pod-1
         image: fashaikh7/three-tier-frontend:{{.Values.image}}
@@ -64,8 +60,6 @@ spec:
         site: USA
         deployment: production
     spec:
-      nodeSelector:
-        "aws": {{ .Values.aws | quote }}
       containers:
       - name: database-pod-1
         image: fashaikh7/three-tier-database:{{.Values.image}}
