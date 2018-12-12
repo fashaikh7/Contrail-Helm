@@ -1,0 +1,6 @@
+name: nginx-with-labels 
+version: 1.0.0
+description: Version control your cluster
+maintainers:
+  - name: Fawad Shaikh
+    twitter: fashaikh7
