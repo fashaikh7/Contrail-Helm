@@ -1,0 +1,10 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-streama
+  annotations:
+    http.port: "8080"
+spec:
+  backend:
+    serviceName: streama 
+    servicePort: 8080 

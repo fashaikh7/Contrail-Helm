@@ -1,0 +1,114 @@
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: contrail-analytics-snmp
+  namespace: kube-system
+  labels:
+    app: contrail-analytics-snmp
+spec:
+  template:
+    metadata:
+      labels:
+        app: contrail-analytics-snmp
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: "node-role.opencontrail.org/analytics_snmp"
+                operator: Exists
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoSchedule
+      hostNetwork: true
+      initContainers:
+      - name: contrail-node-init
+        image: "{{.Values.release}}/contrail-node-init:{{.Values.contrailTag}}"
+        imagePullPolicy: ""
+        env:
+        - name: NODE_TYPE
+          value: "analytics-snmp"
+        - name: CONTRAIL_STATUS_IMAGE
+          value: "{{.Values.release}}/contrail-status:{{.Values.contrailTag}}"
+        envFrom:
+        - configMapRef:
+            name: env
+        - configMapRef:
+            name: contrail-analyticsdb-config
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /host/usr/bin
+          name: host-usr-bin
+        - mountPath: /host/var/lib
+          name: host-var-lib
+      containers:
+      - name: contrail-analytics-snmp-collector
+        image: "{{.Values.release}}/contrail-analytics-snmp-collector:{{.Values.contrailTag}}"
+        imagePullPolicy: ""
+        securityContext:
+          privileged: true
+        envFrom:
+        - configMapRef:
+            name: env
+        volumeMounts:
+        - mountPath: /var/log/contrail
+          name: analytics-snmp-logs
+        env:
+        - name: NODE_TYPE
+          value: analytics-snmp
+      - name: contrail-analytics-snmp-topology
+        image: "{{.Values.release}}/contrail-analytics-snmp-topology:{{.Values.contrailTag}}"
+        imagePullPolicy: ""
+        securityContext:
+          privileged: true
+        envFrom:
+        - configMapRef:
+            name: env
+        volumeMounts:
+        - mountPath: /var/log/contrail
+          name: analytics-snmp-logs
+        env:
+        - name: NODE_TYPE
+          value: analytics-snmp
+      - name: contrail-analytics-snmp-nodemgr
+        image: "{{.Values.release}}/contrail-nodemgr:{{.Values.contrailTag}}"
+        imagePullPolicy: ""
+        securityContext:
+          privileged: true
+        envFrom:
+        - configMapRef:
+            name: env
+        - configMapRef:
+            name: nodemgr-config
+        - configMapRef:
+            name: contrail-analyticsdb-config
+        env:
+        - name: NODE_TYPE
+          value: analytics-snmp
+        volumeMounts:
+        - mountPath: /var/log/contrail
+          name: analytics-snmp-logs
+        - mountPath: /mnt
+          name: docker-unix-socket
+      imagePullSecrets:
+      - name: {{.Values.registry}}
+      volumes:
+      - name: analytics-snmp-logs
+        hostPath:
+          path: /var/log/contrail/analytics-snmp
+      - name: host-var-lib
+        hostPath:
+          path: /var/lib
+      - name: docker-unix-socket
+        hostPath:
+          path: /var/run
+      - name: host-usr-bin
+        hostPath:
+          path: /usr/bin

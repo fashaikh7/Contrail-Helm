@@ -1,0 +1,117 @@
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: contrail-analytics-alarm
+  namespace: kube-system
+  labels:
+    app: contrail-analytics-alarm
+spec:
+  template:
+    metadata:
+      labels:
+        app: contrail-analytics-alarm
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: "node-role.opencontrail.org/analytics_alarm"
+                operator: Exists
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoSchedule
+      hostNetwork: true
+      initContainers:
+      - name: contrail-node-init
+        image: "{{.Values.release}}/contrail-node-init:{{.Values.contrailTag}}"
+        imagePullPolicy: ""
+        env:
+        - name: NODE_TYPE
+          value: "analytics-alarm"
+        - name: CONTRAIL_STATUS_IMAGE
+          value: "{{.Values.release}}/contrail-status:{{.Values.contrailTag}}"
+        envFrom:
+        - configMapRef:
+            name: env
+        - configMapRef:
+            name: contrail-analyticsdb-config
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /host/usr/bin
+          name: host-usr-bin
+        - mountPath: /host/var/lib
+          name: host-var-lib
+      containers:
+      - name: kafka
+        image: "{{.Values.release}}/contrail-external-kafka:{{.Values.contrailTag}}"
+        imagePullPolicy: "IfNotPresent"
+        securityContext:
+          privileged: true
+        env:
+        - name: NODE_TYPE
+          value: analytics-alarm
+        - name: KAFKA_NODES
+          value: {{.Values.masternode}} 
+        envFrom:
+        - configMapRef:
+            name: env
+        - configMapRef:
+            name: configzookeeperenv
+      - name: contrail-analytics-alarm-gen
+        image: "{{.Values.release}}/contrail-analytics-alarm-gen:{{.Values.contrailTag}}"
+        imagePullPolicy: ""
+        securityContext:
+          privileged: true
+        envFrom:
+        - configMapRef:
+            name: env
+        - configMapRef:
+            name: configzookeeperenv
+        volumeMounts:
+        - mountPath: /var/log/contrail
+          name: analytics-alarm-logs
+        env:
+        - name: NODE_TYPE
+          value: analytics-alarm
+      - name: contrail-analytics-alarm-nodemgr
+        image: "{{.Values.release}}/contrail-nodemgr:{{.Values.contrailTag}}"
+        imagePullPolicy: ""
+        securityContext:
+          privileged: true
+        envFrom:
+        - configMapRef:
+            name: env
+        - configMapRef:
+            name: contrail-analyticsdb-config
+        - configMapRef:
+            name: nodemgr-config
+        env:
+        - name: NODE_TYPE
+          value: analytics-alarm
+        volumeMounts:
+        - mountPath: /var/log/contrail
+          name: analytics-alarm-logs
+        - mountPath: /mnt
+          name: docker-unix-socket
+      imagePullSecrets:
+      - name: {{.Values.registry}}
+      volumes:
+      - name: analytics-alarm-logs
+        hostPath:
+          path: /var/log/contrail/analytics-alarm
+      - name: host-var-lib
+        hostPath:
+          path: /var/lib
+      - name: docker-unix-socket
+        hostPath:
+          path: /var/run
+      - name: host-usr-bin
+        hostPath:
+          path: /usr/bin

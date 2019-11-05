@@ -1,0 +1,18 @@
+#Kubernetes Master Node IP - This is where Kubernetes Api runs
+masternode: "10.102.44.41"
+#Kubernetes Api port. By default it's "6443". Please change if needed
+k8ApiPort: "6443"
+#release: "pre-release"
+release: "hub.juniper.net/contrail-nightly"
+#contrailTag: "5.1.0-0.37-ocata"
+#registry: "contrail-registry1"
+registry: "contrail-registry2"
+#contrailTag: "latest"
+#contrailTag: "5.1.0-0.38-ocata"
+contrailTag: "1909.30"
+#contrailTag: "5.0.2-0.409-ocata"
+#Kubernetes Service Subnet. 
+#Analytic Api Port
+#analyticApiPort: "8888"
+#k8ServiceSubnet: "10.0.0.0/24"
+
