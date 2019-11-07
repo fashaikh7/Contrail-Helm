@@ -28,7 +28,7 @@ spec:
           value: password
         - name: MYSQL_USER
           value: streama
-        image: simonjohngreen/video-database 
+        image: fashaikh7/streama-database:latest
         name: mysql
         resources: {}
       restartPolicy: Always
