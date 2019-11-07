@@ -32,7 +32,7 @@ spec:
           value: "3306"
         - name: MYSQL_USER
           value: streama
-        image: simonjohngreen/video-server
+        image: fashaikh7/streama-server:latest
         name: streama
         ports:
         - containerPort: 8080
